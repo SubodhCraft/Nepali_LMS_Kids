@@ -1,0 +1,7 @@
+# Treat native platform folders as generated code so they don't skew GitHub language stats
+ios/ linguist-generated=true
+android/ linguist-generated=true
+macos/ linguist-generated=true
+windows/ linguist-generated=true
+linux/ linguist-generated=true
+web/ linguist-generated=true
