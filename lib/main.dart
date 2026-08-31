@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nepali_kids_lms/core/routing/app_router.dart';
+import 'package:nepali_kids_lms/core/theme/app_theme.dart';
 
 void main() {
   runApp(
@@ -19,10 +20,8 @@ class NepaliKidsLmsApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Nepali Kids LMS',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
-        useMaterial3: true,
-      ),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       routerConfig: router,
     );
   }
