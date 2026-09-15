@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/providers/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 import '../../providers/auth_provider.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -51,15 +53,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     super.dispose();
   }
 
-  Future<void> _onSignup() async {
+  Future<void> _onSignup(String Function(String) t) async {
     if (!_formKey.currentState!.validate()) return;
+    
+    if (_passwordCtrl.text != _confirmCtrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t('confirm_error'))),
+      );
+      return;
+    }
+
     final success = await ref.read(authProvider.notifier).signup(
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
+
     if (success && mounted) {
-      context.go('/dashboard');
+      context.go('/login?message=signup_success');
     }
   }
 
@@ -67,6 +78,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState.status == AuthStatus.loading;
+    
+    // Language setup
+    final appLang = ref.watch(languageProvider);
+    final langCode = appLang == AppLanguage.en ? 'en' : 'ne';
+    String t(String key) => AppTranslations.get(langCode, key);
 
     return Scaffold(
       body: Container(
@@ -81,117 +97,113 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 12),
-                    // ── Back button ──────────────────────────────
+                    // Language Toggle
                     Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        onPressed: () {
-                          ref.read(authProvider.notifier).clearError();
-                          context.go('/login');
-                        },
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(12),
+                      alignment: Alignment.topRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('EN', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                          Switch(
+                            value: appLang == AppLanguage.ne,
+                            activeColor: AppColors.primary,
+                            onChanged: (val) {
+                              ref.read(languageProvider.notifier).toggleLanguage();
+                            },
                           ),
-                          child: const Icon(Icons.arrow_back_ios_new_rounded,
-                              color: AppColors.primary, size: 20),
-                        ),
+                          const Text('NE', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    // ── Header ───────────────────────────────────
+                    const SizedBox(height: 10),
+                    // ── Header ────────────────────────────────────────
                     Container(
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [AppColors.accent, Color(0xFFFF5722)],
+                          colors: [AppColors.accent, Color(0xFFFF9E80)],
                         ),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.accent.withOpacity(0.35),
-                            blurRadius: 18,
+                            blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
                         ],
                       ),
                       child: const Center(
-                        child: Text('🎉', style: TextStyle(fontSize: 44)),
+                        child: Text('🚀', style: TextStyle(fontSize: 44)),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Text(
-                      'नयाँ खाता बनाउनुस्!',
+                      t('signup_title'),
                       style:
                           Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontSize: 28,
                                 color: AppColors.textDark,
+                                fontSize: 28,
                               ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'सिकाइको यात्रा सुरु गर्नुहोस् 🚀',
+                      t('signup_subtitle'),
+                      textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF6B8FAE),
                           ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 32),
                     // ── Form ─────────────────────────────────────
                     Form(
                       key: _formKey,
                       child: Column(
                         children: [
-                          // Full Name
+                          // Name
                           TextFormField(
                             controller: _nameCtrl,
+                            keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
-                            textCapitalization: TextCapitalization.words,
-                            decoration: const InputDecoration(
-                              labelText: 'पूरा नाम',
-                              hintText: 'राम बहादुर',
-                              prefixIcon: Icon(Icons.person_rounded),
+                            decoration: InputDecoration(
+                              labelText: t('name_label'),
+                              hintText: t('name_hint'),
+                              prefixIcon: const Icon(Icons.person_rounded),
                             ),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) {
-                                return 'कृपया आफ्नो नाम लेख्नुहोस्';
+                                return t('name_error');
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           // Email
                           TextFormField(
                             controller: _emailCtrl,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'इमेल',
-                              hintText: 'email@example.com',
-                              prefixIcon: Icon(Icons.email_rounded),
+                            decoration: InputDecoration(
+                              labelText: t('email_label'),
+                              hintText: t('email_hint'),
+                              prefixIcon: const Icon(Icons.email_rounded),
                             ),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) {
-                                return 'कृपया इमेल लेख्नुहोस्';
-                              }
-                              if (!v.contains('@')) {
-                                return 'मान्य इमेल लेख्नुहोस्';
+                                return t('email_error');
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           // Password
                           TextFormField(
                             controller: _passwordCtrl,
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              labelText: 'पासवर्ड',
-                              hintText: '••••••••',
+                              labelText: t('password_label'),
+                              hintText: t('password_hint'),
                               prefixIcon: const Icon(Icons.lock_rounded),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -205,27 +217,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                               ),
                             ),
                             validator: (v) {
-                              if (v == null || v.isEmpty) {
-                                return 'कृपया पासवर्ड लेख्नुहोस्';
-                              }
-                              if (v.length < 6) {
-                                return 'पासवर्ड कम्तिमा ६ अक्षरको हुनु पर्छ';
+                              if (v == null || v.length < 6) {
+                                return t('error_password_length');
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           // Confirm Password
                           TextFormField(
                             controller: _confirmCtrl,
                             obscureText: _obscureConfirm,
                             textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _onSignup(),
+                            onFieldSubmitted: (_) => _onSignup(t),
                             decoration: InputDecoration(
-                              labelText: 'पासवर्ड पुष्टि गर्नुहोस्',
-                              hintText: '••••••••',
-                              prefixIcon:
-                                  const Icon(Icons.lock_outline_rounded),
+                              labelText: t('confirm_label'),
+                              hintText: t('password_hint'),
+                              prefixIcon: const Icon(Icons.lock_outline_rounded),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscureConfirm
@@ -238,17 +246,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                               ),
                             ),
                             validator: (v) {
-                              if (v == null || v.isEmpty) {
-                                return 'पासवर्ड पुष्टि गर्नुहोस्';
-                              }
-                              if (v != _passwordCtrl.text) {
-                                return 'पासवर्ड मेल खाएन';
+                              if (v == null || v != _passwordCtrl.text) {
+                                return t('confirm_error');
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(height: 10),
-                          // Error
+                          const SizedBox(height: 8),
+                          // Error message
                           if (authState.status == AuthStatus.error)
                             Container(
                               margin: const EdgeInsets.only(top: 8),
@@ -264,7 +269,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      authState.errorMessage ?? 'त्रुटि भयो।',
+                                      authState.errorMessage ?? 'Error',
                                       style: const TextStyle(
                                         color: AppColors.error,
                                         fontWeight: FontWeight.w600,
@@ -275,13 +280,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                 ],
                               ),
                             ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
                           // Signup button
                           SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: isLoading ? null : _onSignup,
+                              onPressed: isLoading ? null : () => _onSignup(t),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.accent,
                                 disabledBackgroundColor:
@@ -296,17 +301,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                         strokeWidth: 2.5,
                                       ),
                                     )
-                                  : const Text('साइन अप गर्नुहोस्'),
+                                  : Text(t('signup_button')),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           // Login navigation
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                'पहिले नै खाता छ? ',
-                                style: TextStyle(
+                              Text(
+                                t('has_account'),
+                                style: const TextStyle(
                                   color: Color(0xFF6B8FAE),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -322,9 +327,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: const Text(
-                                  'लग इन गर्नुहोस्',
-                                  style: TextStyle(
+                                child: Text(
+                                  t('login_button'),
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.primary,
                                   ),

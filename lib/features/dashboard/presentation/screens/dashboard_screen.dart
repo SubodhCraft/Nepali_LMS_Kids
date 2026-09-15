@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../providers/progress_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -46,45 +47,47 @@ class DashboardScreen extends ConsumerWidget {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.05,
-                children: const [
+                children: [
                   _FeatureCard(
                     emoji: '📚',
                     label: 'पाठहरू',
                     sublabel: 'Lessons',
                     color: AppColors.lessons,
+                    onTap: () => context.go('/lessons'),
                   ),
-                  _FeatureCard(
+                  const _FeatureCard(
                     emoji: '🎮',
                     label: 'खेलहरू',
                     sublabel: 'Games',
                     color: AppColors.games,
                   ),
-                  _FeatureCard(
+                  const _FeatureCard(
                     emoji: '⭐',
                     label: 'पुरस्कारहरू',
                     sublabel: 'Rewards',
                     color: AppColors.rewards,
                     textDark: true,
                   ),
-                  _FeatureCard(
+                  const _FeatureCard(
                     emoji: '🏆',
                     label: 'उपलब्धिहरू',
                     sublabel: 'Achievements',
                     color: AppColors.achievements,
                   ),
-                  _FeatureCard(
+                  const _FeatureCard(
                     emoji: '📖',
                     label: 'कथाहरू',
                     sublabel: 'Stories',
                     color: AppColors.stories,
                   ),
-                  _FeatureCard(
+                  const _FeatureCard(
                     emoji: '🔊',
                     label: 'ध्वनि',
                     sublabel: 'Audio',
                     color: AppColors.audio,
                   ),
                 ],
+
               ),
             ),
             // ── Progress section ─────────────────────────────────
@@ -191,12 +194,16 @@ class _DashboardHeader extends StatelessWidget {
   }
 }
 
-class _GreetingBanner extends StatelessWidget {
+class _GreetingBanner extends ConsumerWidget {
   final String userName;
   const _GreetingBanner({required this.userName});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ref.watch(progressProvider);
+    final completedLessons = progress.viewedLessonIds.length;
+    final totalLessons = 61; // Total letters/maatras
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -224,16 +231,16 @@ class _GreetingBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'आज ३ पाठ पढ्नुहोस्!',
+                  'आज $totalLessons पाठ पढ्नुहोस्!',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.textDark,
                         fontSize: 17,
                       ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'तपाईंले ५ मध्ये २ पाठ गर्नु भयो।',
-                  style: TextStyle(
+                Text(
+                  'तपाईंले $totalLessons मध्ये $completedLessons पाठ गर्नु भयो।',
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textDark,
                     fontWeight: FontWeight.w600,
@@ -254,6 +261,7 @@ class _FeatureCard extends StatelessWidget {
   final String sublabel;
   final Color color;
   final bool textDark;
+  final VoidCallback? onTap;
 
   const _FeatureCard({
     required this.emoji,
@@ -261,6 +269,7 @@ class _FeatureCard extends StatelessWidget {
     required this.sublabel,
     required this.color,
     this.textDark = false,
+    this.onTap,
   });
 
   @override
@@ -270,7 +279,7 @@ class _FeatureCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {}, // TODO: Wire up navigation to each feature
+        onTap: onTap ?? () {},
         borderRadius: BorderRadius.circular(22),
         child: Ink(
           decoration: BoxDecoration(
@@ -328,9 +337,14 @@ class _FeatureCard extends StatelessWidget {
   }
 }
 
-class _ProgressCard extends StatelessWidget {
+class _ProgressCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ref.watch(progressProvider);
+    final completedLessons = progress.viewedLessonIds.length;
+    final totalLessons = 61;
+    final lessonsFraction = completedLessons / totalLessons;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -359,21 +373,21 @@ class _ProgressCard extends StatelessWidget {
           _ProgressRow(
             label: 'पाठ',
             emoji: '📚',
-            value: 0.4,
+            value: lessonsFraction,
             color: AppColors.lessons,
           ),
           const SizedBox(height: 12),
           _ProgressRow(
             label: 'खेल',
             emoji: '🎮',
-            value: 0.7,
+            value: 0.0,
             color: AppColors.games,
           ),
           const SizedBox(height: 12),
           _ProgressRow(
             label: 'कथा',
             emoji: '📖',
-            value: 0.25,
+            value: 0.0,
             color: AppColors.stories,
           ),
         ],
@@ -410,7 +424,7 @@ class _ProgressRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                       color: AppColors.textDark,

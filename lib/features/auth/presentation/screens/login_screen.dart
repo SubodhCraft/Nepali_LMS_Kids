@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/providers/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final String? successMessage;
+  const LoginScreen({super.key, this.successMessage});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -62,6 +65,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final authState = ref.watch(authProvider);
     final isLoading = authState.status == AuthStatus.loading;
 
+    // Language setup
+    final appLang = ref.watch(languageProvider);
+    final langCode = appLang == AppLanguage.en ? 'en' : 'ne';
+    String t(String key) => AppTranslations.get(langCode, key);
+
+    final showSuccessBanner = widget.successMessage == 'signup_success';
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.loginGradient),
@@ -75,7 +85,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 20),
+                    // ── Success Banner (shown after signup) ──────────
+                    if (showSuccessBanner)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color: AppColors.success.withOpacity(0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle_rounded,
+                                color: AppColors.success, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                langCode == 'ne'
+                                    ? '✅ खाता सफलतापूर्वक बनाइयो! कृपया लग इन गर्नुहोस्।'
+                                    : '✅ Account created! Please log in.',
+                                style: const TextStyle(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Language Toggle
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('EN', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                          Switch(
+                            value: appLang == AppLanguage.ne,
+                            activeColor: AppColors.primary,
+                            onChanged: (val) {
+                              ref.read(languageProvider.notifier).toggleLanguage();
+                            },
+                          ),
+                          const Text('NE', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     // ── Top illustration ─────────────────────────
                     Container(
                       width: 110,
@@ -99,7 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'स्वागत छ! 👋',
+                      t('login_title'),
                       style:
                           Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 color: AppColors.textDark,
@@ -108,7 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'आफ्नो खाताबाट लग इन गर्नुहोस्',
+                      t('login_subtitle'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: const Color(0xFF6B8FAE),
                           ),
@@ -124,14 +184,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             controller: _emailCtrl,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'इमेल',
-                              hintText: 'email@example.com',
-                              prefixIcon: Icon(Icons.email_rounded),
+                            decoration: InputDecoration(
+                              labelText: t('email_label'),
+                              hintText: t('email_hint'),
+                              prefixIcon: const Icon(Icons.email_rounded),
                             ),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) {
-                                return 'कृपया इमेल लेख्नुहोस्';
+                                return t('email_error');
                               }
                               return null;
                             },
@@ -144,8 +204,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _onLogin(),
                             decoration: InputDecoration(
-                              labelText: 'पासवर्ड',
-                              hintText: '••••••••',
+                              labelText: t('password_label'),
+                              hintText: t('password_hint'),
                               prefixIcon: const Icon(Icons.lock_rounded),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -160,7 +220,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                             validator: (v) {
                               if (v == null || v.isEmpty) {
-                                return 'कृपया पासवर्ड लेख्नुहोस्';
+                                return t('password_error');
                               }
                               return null;
                             },
@@ -182,7 +242,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      authState.errorMessage ?? 'त्रुटि भयो।',
+                                      authState.errorMessage ?? 'Error',
                                       style: const TextStyle(
                                         color: AppColors.error,
                                         fontWeight: FontWeight.w600,
@@ -214,7 +274,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                         strokeWidth: 2.5,
                                       ),
                                     )
-                                  : const Text('लग इन'),
+                                  : Text(t('login_button')),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -227,7 +287,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
                                 child: Text(
-                                  'अथवा',
+                                  t('or'),
                                   style: TextStyle(
                                     color: Colors.grey.shade400,
                                     fontWeight: FontWeight.w600,
@@ -243,9 +303,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                'खाता छैन? ',
-                                style: TextStyle(
+                              Text(
+                                t('no_account'),
+                                style: const TextStyle(
                                   color: Color(0xFF6B8FAE),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -261,9 +321,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: const Text(
-                                  'साइन अप गर्नुहोस्',
-                                  style: TextStyle(
+                                child: Text(
+                                  t('sign_up'),
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.accent,
                                   ),

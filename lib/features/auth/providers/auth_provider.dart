@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Dummy auth state — replaces real DB auth later.
-enum AuthStatus { unauthenticated, loading, authenticated, error }
+enum AuthStatus { unauthenticated, loading, authenticated, signupSuccess, error }
+
 
 class AuthState {
   final AuthStatus status;
@@ -32,70 +33,115 @@ class AuthState {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
-  @override
-  AuthState build() => const AuthState();
+  final _supabase = Supabase.instance.client;
 
-  /// Dummy login — always succeeds after a fake 1.5s network delay.
-  /// Replace the body of this method with real DB auth later.
+  @override
+  AuthState build() {
+    // Check if user is already logged in
+    final session = _supabase.auth.currentSession;
+    if (session != null) {
+      return AuthState(
+        status: AuthStatus.authenticated,
+        userEmail: session.user.email,
+        userName: session.user.userMetadata?['name'] ?? session.user.email?.split('@').first,
+      );
+    }
+    return const AuthState();
+  }
+
   Future<bool> login({
     required String email,
     required String password,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
-    await Future.delayed(const Duration(milliseconds: 1500));
 
-    // ── DUMMY VALIDATION ──────────────────────────────────────────
     if (email.isEmpty || password.isEmpty) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'Email र Password भर्नु होस्।',
+        errorMessage: 'Email and Password cannot be empty',
       );
       return false;
     }
-    // TODO: Replace with real DB authentication
-    state = state.copyWith(
-      status: AuthStatus.authenticated,
-      userEmail: email,
-      userName: email.split('@').first,
-    );
-    return true;
+
+    try {
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      
+      if (response.user != null) {
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          userEmail: response.user!.email,
+          userName: response.user!.userMetadata?['name'] ?? response.user!.email?.split('@').first,
+        );
+        return true;
+      }
+    } on AuthException catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'An unexpected error occurred.',
+      );
+    }
+    return false;
   }
 
-  /// Dummy signup — always succeeds after a fake 1.5s network delay.
-  /// Replace the body of this method with real DB auth later.
   Future<bool> signup({
     required String name,
     required String email,
     required String password,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
-    await Future.delayed(const Duration(milliseconds: 1500));
 
-    // ── DUMMY VALIDATION ──────────────────────────────────────────
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'सबै फिल्ड भर्नु होस्।',
+        errorMessage: 'Please fill all fields',
       );
       return false;
     }
     if (password.length < 6) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: 'Password कम्तिमा ६ अक्षरको हुनु पर्छ।',
+        errorMessage: 'Password must be at least 6 characters',
       );
       return false;
     }
-    // TODO: Replace with real DB registration
-    state = state.copyWith(
-      status: AuthStatus.authenticated,
-      userEmail: email,
-      userName: name,
-    );
-    return true;
+
+    try {
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'name': name},
+      );
+      
+      if (response.user != null) {
+        // Sign out any auto-created session so user must log in manually
+        await _supabase.auth.signOut();
+        state = const AuthState(status: AuthStatus.signupSuccess);
+        return true;
+      }
+    } on AuthException catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'An unexpected error occurred.',
+      );
+    }
+    return false;
   }
 
-  void logout() {
+  Future<void> logout() async {
+    await _supabase.auth.signOut();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 

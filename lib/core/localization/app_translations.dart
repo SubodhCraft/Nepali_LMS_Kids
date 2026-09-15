@@ -1,0 +1,58 @@
+class AppTranslations {
+  static const Map<String, Map<String, String>> translations = {
+    'en': {
+      'login_title': 'Welcome Back! 👋',
+      'login_subtitle': 'Sign in to continue learning',
+      'email_label': 'Email',
+      'email_hint': 'email@example.com',
+      'email_error': 'Please enter email',
+      'password_label': 'Password',
+      'password_hint': '••••••••',
+      'password_error': 'Please enter password',
+      'login_button': 'Login',
+      'or': 'OR',
+      'no_account': 'Don\'t have an account? ',
+      'sign_up': 'Sign Up',
+      'signup_title': 'Join the Fun! 🎉',
+      'signup_subtitle': 'Create an account to start playing and learning',
+      'name_label': 'Name',
+      'name_hint': 'Your name',
+      'name_error': 'Please enter your name',
+      'confirm_label': 'Confirm Password',
+      'confirm_error': 'Passwords do not match',
+      'signup_button': 'Sign Up',
+      'has_account': 'Already have an account? ',
+      'error_empty_fields': 'Please fill all fields',
+      'error_password_length': 'Password must be at least 6 characters',
+    },
+    'ne': {
+      'login_title': 'स्वागत छ! 👋',
+      'login_subtitle': 'आफ्नो खाताबाट लग इन गर्नुहोस्',
+      'email_label': 'इमेल',
+      'email_hint': 'email@example.com',
+      'email_error': 'कृपया इमेल लेख्नुहोस्',
+      'password_label': 'पासवर्ड',
+      'password_hint': '••••••••',
+      'password_error': 'कृपया पासवर्ड लेख्नुहोस्',
+      'login_button': 'लग इन',
+      'or': 'अथवा',
+      'no_account': 'खाता छैन? ',
+      'sign_up': 'साइन अप गर्नुहोस्',
+      'signup_title': 'रमाइलोमा सामेल हुनुहोस्! 🎉',
+      'signup_subtitle': 'खेल्न र सिक्नको लागि खाता बनाउनुहोस्',
+      'name_label': 'नाम',
+      'name_hint': 'तपाईंको नाम',
+      'name_error': 'कृपया आफ्नो नाम लेख्नुहोस्',
+      'confirm_label': 'पासवर्ड पुष्टि गर्नुहोस्',
+      'confirm_error': 'पासवर्ड मिलेन',
+      'signup_button': 'साइन अप',
+      'has_account': 'खाता पहिल्यै छ? ',
+      'error_empty_fields': 'सबै फिल्ड भर्नु होस्।',
+      'error_password_length': 'Password कम्तिमा ६ अक्षरको हुनु पर्छ।',
+    },
+  };
+
+  static String get(String langCode, String key) {
+    return translations[langCode]?[key] ?? key;
+  }
+}
