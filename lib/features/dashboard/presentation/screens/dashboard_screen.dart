@@ -55,18 +55,12 @@ class DashboardScreen extends ConsumerWidget {
                     color: AppColors.lessons,
                     onTap: () => context.go('/lessons'),
                   ),
-                  const _FeatureCard(
+                  _FeatureCard(
                     emoji: '🎮',
                     label: 'खेलहरू',
                     sublabel: 'Games',
                     color: AppColors.games,
-                  ),
-                  const _FeatureCard(
-                    emoji: '⭐',
-                    label: 'पुरस्कारहरू',
-                    sublabel: 'Rewards',
-                    color: AppColors.rewards,
-                    textDark: true,
+                    onTap: () => context.go('/games'),
                   ),
                   const _FeatureCard(
                     emoji: '🏆',
@@ -79,12 +73,6 @@ class DashboardScreen extends ConsumerWidget {
                     label: 'कथाहरू',
                     sublabel: 'Stories',
                     color: AppColors.stories,
-                  ),
-                  const _FeatureCard(
-                    emoji: '🔊',
-                    label: 'ध्वनि',
-                    sublabel: 'Audio',
-                    color: AppColors.audio,
                   ),
                 ],
 
