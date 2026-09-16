@@ -22,7 +22,7 @@ class AlphabetSectionScreen extends StatelessWidget {
         slivers: [
           // ── Header ──────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 140,
+            expandedHeight: 180,
             pinned: true,
             backgroundColor: c1,
             leading: IconButton(
@@ -45,7 +45,7 @@ class AlphabetSectionScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 36),
+                      const SizedBox(height: 24),
                       Text(section.emoji, style: const TextStyle(fontSize: 40)),
                       const SizedBox(height: 6),
                       Text(
