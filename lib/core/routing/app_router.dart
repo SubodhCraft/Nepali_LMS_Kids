@@ -8,6 +8,9 @@ import 'package:nepali_kids_lms/features/learning_modules/presentation/screens/l
 import 'package:nepali_kids_lms/features/learning_modules/presentation/screens/alphabet_section_screen.dart';
 import 'package:nepali_kids_lms/features/learning_modules/presentation/screens/letter_detail_screen.dart';
 import 'package:nepali_kids_lms/features/learning_modules/data/nepali_alphabet_data.dart';
+import 'package:nepali_kids_lms/features/games/presentation/games_hub_screen.dart';
+import 'package:nepali_kids_lms/features/games/memory_match/presentation/memory_match_screen.dart';
+import 'package:nepali_kids_lms/features/games/matra_machine/presentation/matra_machine_screen.dart';
 
 // Provides the GoRouter instance
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -49,12 +52,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/lessons/letter/:letterId',
         builder: (context, state) {
           final letterId = state.pathParameters['letterId']!;
-          // Find letter across all sections
           final allLetters = NepaliAlphabetData.sections
               .expand((s) => s.letters)
               .toList();
           final letter = allLetters.firstWhere((l) => l.id == letterId);
-          // Get the full list for next/prev navigation
           final sectionId = state.uri.queryParameters['sectionId'] ?? '';
           final sectionLetters = NepaliAlphabetData.sections
               .firstWhere((s) => s.id == sectionId,
@@ -66,6 +67,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             sectionId: sectionId,
           );
         },
+      ),
+      // ── Games ──────────────────────────────────────────────────────
+      GoRoute(
+        path: '/games',
+        builder: (context, state) => const GamesHubScreen(),
+      ),
+      GoRoute(
+        path: '/games/memory-match',
+        builder: (context, state) => const MemoryMatchScreen(),
+      ),
+      GoRoute(
+        path: '/games/matra-machine',
+        builder: (context, state) => const MatraMachineScreen(),
       ),
     ],
   );
