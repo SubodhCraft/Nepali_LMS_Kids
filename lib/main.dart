@@ -11,6 +11,20 @@ const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Suppress noisy debug prints from EGL, InputConnection, etc.
+  // Comment this out if you need to see full logs during debugging.
+  debugPrint = (String? message, {int? wrapWidth}) {
+    // Only show our own app logs (they start with a recognizable prefix)
+    // Suppress Android system noise
+    if (message != null &&
+        !message.contains('EGL_emulation') &&
+        !message.contains('RemoteInputConnection') &&
+        !message.contains('InsetsController')) {
+      // ignore: avoid_print
+      print(message);
+    }
+  };
+
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
