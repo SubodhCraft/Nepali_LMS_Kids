@@ -11,6 +11,8 @@ import 'package:nepali_kids_lms/features/learning_modules/data/nepali_alphabet_d
 import 'package:nepali_kids_lms/features/games/presentation/games_hub_screen.dart';
 import 'package:nepali_kids_lms/features/games/memory_match/presentation/memory_match_screen.dart';
 import 'package:nepali_kids_lms/features/games/matra_machine/presentation/matra_machine_screen.dart';
+import 'package:nepali_kids_lms/features/stories/presentation/screens/stories_list_screen.dart';
+import 'package:nepali_kids_lms/features/stories/presentation/screens/story_reader_screen.dart';
 
 // Provides the GoRouter instance
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -80,6 +82,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/games/matra-machine',
         builder: (context, state) => const MatraMachineScreen(),
+      ),
+      // ── Stories ──────────────────────────────────────────────────
+      GoRoute(
+        path: '/stories',
+        builder: (context, state) => const StoriesListScreen(),
+      ),
+      GoRoute(
+        path: '/stories/:storyId',
+        builder: (context, state) {
+          final storyId = state.pathParameters['storyId']!;
+          return StoryReaderScreen(storyId: storyId);
+        },
       ),
     ],
   );

@@ -68,11 +68,12 @@ class DashboardScreen extends ConsumerWidget {
                     sublabel: 'Achievements',
                     color: AppColors.achievements,
                   ),
-                  const _FeatureCard(
+                  _FeatureCard(
                     emoji: '📖',
                     label: 'कथाहरू',
                     sublabel: 'Stories',
                     color: AppColors.stories,
+                    onTap: () => context.go('/stories'),
                   ),
                 ],
 
