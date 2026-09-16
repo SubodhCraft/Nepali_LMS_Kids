@@ -4,24 +4,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Represents the global progress state of the user.
 class ProgressState {
   final Set<String> viewedLessonIds;
-  final int gamesPlayed;
-  final int storiesRead;
+  final Set<String> playedGameIds;
+  final Set<String> readStoryIds;
 
   const ProgressState({
     required this.viewedLessonIds,
-    required this.gamesPlayed,
-    required this.storiesRead,
+    required this.playedGameIds,
+    required this.readStoryIds,
   });
 
   ProgressState copyWith({
     Set<String>? viewedLessonIds,
-    int? gamesPlayed,
-    int? storiesRead,
+    Set<String>? playedGameIds,
+    Set<String>? readStoryIds,
   }) {
     return ProgressState(
       viewedLessonIds: viewedLessonIds ?? this.viewedLessonIds,
-      gamesPlayed: gamesPlayed ?? this.gamesPlayed,
-      storiesRead: storiesRead ?? this.storiesRead,
+      playedGameIds: playedGameIds ?? this.playedGameIds,
+      readStoryIds: readStoryIds ?? this.readStoryIds,
     );
   }
 }
@@ -29,16 +29,16 @@ class ProgressState {
 /// Notifier to manage progress and sync with SharedPreferences
 class ProgressNotifier extends Notifier<ProgressState> {
   static const _lessonsKey = 'viewed_lessons';
-  static const _gamesKey = 'games_played';
-  static const _storiesKey = 'stories_read';
+  static const _gamesKey = 'played_games';
+  static const _storiesKey = 'read_stories';
 
   @override
   ProgressState build() {
     _loadProgress();
     return const ProgressState(
       viewedLessonIds: {},
-      gamesPlayed: 0,
-      storiesRead: 0,
+      playedGameIds: {},
+      readStoryIds: {},
     );
   }
 
@@ -46,19 +46,29 @@ class ProgressNotifier extends Notifier<ProgressState> {
     final prefs = await SharedPreferences.getInstance();
     
     final lessonsList = prefs.getStringList(_lessonsKey) ?? [];
-    final games = prefs.getInt(_gamesKey) ?? 0;
-    final stories = prefs.getInt(_storiesKey) ?? 0;
+    final gamesList = prefs.getStringList(_gamesKey) ?? [];
+    final storiesList = prefs.getStringList(_storiesKey) ?? [];
 
     state = ProgressState(
       viewedLessonIds: lessonsList.toSet(),
-      gamesPlayed: games,
-      storiesRead: stories,
+      playedGameIds: gamesList.toSet(),
+      readStoryIds: storiesList.toSet(),
     );
   }
 
   Future<void> _saveLessons(Set<String> lessons) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_lessonsKey, lessons.toList());
+  }
+
+  Future<void> _saveGames(Set<String> games) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_gamesKey, games.toList());
+  }
+
+  Future<void> _saveStories(Set<String> stories) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_storiesKey, stories.toList());
   }
 
   /// Marks a specific lesson letter as viewed/read
@@ -71,22 +81,24 @@ class ProgressNotifier extends Notifier<ProgressState> {
     }
   }
 
-  /// Mark games as played (stub for future use)
-  Future<void> incrementGamesPlayed() async {
-    final updated = state.gamesPlayed + 1;
-    state = state.copyWith(gamesPlayed: updated);
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_gamesKey, updated);
+  /// Mark a specific game as played
+  Future<void> markGameAsPlayed(String gameId) async {
+    if (!state.playedGameIds.contains(gameId)) {
+      final updatedSet = Set<String>.from(state.playedGameIds)..add(gameId);
+      
+      state = state.copyWith(playedGameIds: updatedSet);
+      await _saveGames(updatedSet);
+    }
   }
 
-  /// Mark stories as read (stub for future use)
-  Future<void> incrementStoriesRead() async {
-    final updated = state.storiesRead + 1;
-    state = state.copyWith(storiesRead: updated);
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_storiesKey, updated);
+  /// Mark a specific story as read
+  Future<void> markStoryAsRead(String storyId) async {
+    if (!state.readStoryIds.contains(storyId)) {
+      final updatedSet = Set<String>.from(state.readStoryIds)..add(storyId);
+      
+      state = state.copyWith(readStoryIds: updatedSet);
+      await _saveStories(updatedSet);
+    }
   }
 }
 

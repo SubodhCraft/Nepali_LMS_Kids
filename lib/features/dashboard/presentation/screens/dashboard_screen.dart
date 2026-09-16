@@ -62,11 +62,12 @@ class DashboardScreen extends ConsumerWidget {
                     color: AppColors.games,
                     onTap: () => context.go('/games'),
                   ),
-                  const _FeatureCard(
+                  _FeatureCard(
                     emoji: '🏆',
                     label: 'उपलब्धिहरू',
                     sublabel: 'Achievements',
                     color: AppColors.achievements,
+                    onTap: () => context.go('/achievements'),
                   ),
                   _FeatureCard(
                     emoji: '📖',
@@ -330,9 +331,16 @@ class _ProgressCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = ref.watch(progressProvider);
+    
     final completedLessons = progress.viewedLessonIds.length;
     final totalLessons = 61;
-    final lessonsFraction = completedLessons / totalLessons;
+    final lessonsFraction = (completedLessons / totalLessons).clamp(0.0, 1.0);
+
+    final completedGames = progress.playedGameIds.length;
+    final gamesFraction = (completedGames / 2).clamp(0.0, 1.0);
+
+    final completedStories = progress.readStoryIds.length;
+    final storiesFraction = (completedStories / 5).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -369,14 +377,14 @@ class _ProgressCard extends ConsumerWidget {
           _ProgressRow(
             label: 'खेल',
             emoji: '🎮',
-            value: 0.0,
+            value: gamesFraction,
             color: AppColors.games,
           ),
           const SizedBox(height: 12),
           _ProgressRow(
             label: 'कथा',
             emoji: '📖',
-            value: 0.0,
+            value: storiesFraction,
             color: AppColors.stories,
           ),
         ],
