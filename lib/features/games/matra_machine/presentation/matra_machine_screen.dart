@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../learning_modules/services/tts_service.dart';
 import '../models/matra_combo.dart';
+import '../../../dashboard/providers/progress_provider.dart';
+import '../../../rewards/domain/models/reward_event.dart';
+import '../../../rewards/providers/reward_manager.dart';
+import '../../../rewards/presentation/widgets/celebration_modal.dart';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 class MatraMachineState {
@@ -162,43 +166,21 @@ class _MatraMachineScreenState extends ConsumerState<MatraMachineScreen>
     }
   }
 
-  void _showCompleteDialog() {
-    showDialog(
+  void _showCompleteDialog() async {
+    ref.read(progressProvider.notifier).markGameAsPlayed('matra_machine');
+    
+    final payload = await ref.read(rewardManagerProvider.notifier).dispatch(
+      const RewardEvent(type: RewardEventType.gameWin, entityId: 'matra_machine', score: 3),
+    );
+
+    if (!mounted) return;
+
+    CelebrationModal.show(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('✨', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 8),
-            const Text('सबै मात्रा सिकियो!', textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.success)),
-            const SizedBox(height: 8),
-            const Text('All matras learned!', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-              Icon(Icons.star_rounded, color: Colors.amber, size: 44),
-              Icon(Icons.star_rounded, color: Colors.amber, size: 44),
-              Icon(Icons.star_rounded, color: Colors.amber, size: 44),
-            ]),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ref.read(matraMachineProvider.notifier).nextRound();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              ),
-              child: const Text('फेरि खेल', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-            ),
-          ],
-        ),
-      ),
+      payload: payload,
+      onContinue: () {
+        ref.read(matraMachineProvider.notifier).nextRound();
+      },
     );
   }
 

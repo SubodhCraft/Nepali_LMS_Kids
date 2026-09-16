@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/nepali_letter.dart';
 import '../../../dashboard/providers/progress_provider.dart';
+import '../../../rewards/domain/models/reward_event.dart';
+import '../../../rewards/providers/reward_manager.dart';
+import '../../../rewards/presentation/widgets/celebration_modal.dart';
 import '../widgets/tracing_canvas.dart';
 import '../../services/tts_service.dart';
 
@@ -436,64 +439,69 @@ class _LetterDetailScreenState extends ConsumerState<LetterDetailScreen>
     _showEvaluationDialog(score);
   }
 
-  void _showEvaluationDialog(int score) {
+  void _showEvaluationDialog(int score) async {
     bool passed = score >= 4;
-    int stars = score >= 8 ? 3 : (score >= 4 ? 2 : (score >= 2 ? 1 : 0));
+    
+    if (passed) {
+      // Dispatch reward for completing a lesson (trace)
+      final payload = await ref.read(rewardManagerProvider.notifier).dispatch(
+        RewardEvent(
+          type: RewardEventType.lessonComplete,
+          entityId: widget.letter.id,
+        ),
+      );
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            passed ? 'Congratulations! 🎉' : 'Try again!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: passed ? Colors.green : Colors.orange,
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
+      if (!mounted) return;
+
+      CelebrationModal.show(
+        context: context,
+        payload: payload,
+        onContinue: () {
+          // Check if there is a next letter
+          final currentIndex = widget.sectionLetters.indexWhere((l) => l.id == widget.letter.id);
+          final hasNext = currentIndex < widget.sectionLetters.length - 1;
+          
+          if (hasNext) {
+            _navigate(1);
+          } else {
+            context.go('/lessons');
+          }
+        },
+      );
+    } else {
+      // Failed, show retry dialog
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text(
+              'Try again!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
             ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'AI Score: $score/10',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (index) {
-                  return Icon(
-                    index < stars ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: Colors.amber,
-                    size: 48,
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                passed ? 'Great job! You traced it correctly.' : 'You need at least 40% to pass. Keep practicing!',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
+            content: const Text(
+              'You need to trace the letter more accurately. Keep practicing!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _canvasKey.currentState?.clearCanvas();
+                },
+                child: const Text('OK', style: TextStyle(fontSize: 18)),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                if (!passed) {
-                  _canvasKey.currentState?.clearCanvas();
-                }
-              },
-              child: const Text('OK', style: TextStyle(fontSize: 18)),
-            ),
-          ],
-        );
-      },
-    );
+          );
+        },
+      );
+    }
   }
 }
 

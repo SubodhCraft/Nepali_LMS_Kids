@@ -6,6 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../../data/nepali_stories_data.dart';
 import '../../domain/models/story.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../dashboard/providers/progress_provider.dart';
+import '../../../rewards/domain/models/reward_event.dart';
+import '../../../rewards/providers/reward_manager.dart';
+import '../../../rewards/presentation/widgets/celebration_modal.dart';
 
 // ─── TTS Narration State ──────────────────────────────────────────────────────
 enum NarrationStatus { idle, playing, paused }
@@ -112,6 +116,20 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
 
     if (_isNarrating && _status == NarrationStatus.playing) {
       // Story finished
+      ref.read(progressProvider.notifier).markStoryAsRead(_story.id);
+      
+      final payload = await ref.read(rewardManagerProvider.notifier).dispatch(
+        RewardEvent(type: RewardEventType.storyRead, entityId: _story.id),
+      );
+
+      if (mounted) {
+        CelebrationModal.show(
+          context: context,
+          payload: payload,
+          onContinue: () {},
+        );
+      }
+
       setState(() {
         _status = NarrationStatus.idle;
         _isNarrating = false;

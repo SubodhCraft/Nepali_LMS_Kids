@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../models/memory_tile.dart';
+import '../../../dashboard/providers/progress_provider.dart';
+import '../../../rewards/domain/models/reward_event.dart';
+import '../../../rewards/providers/reward_manager.dart';
+import '../../../rewards/presentation/widgets/celebration_modal.dart';
 import '../providers/memory_match_provider.dart';
 import 'widgets/memory_tile_widget.dart';
 
@@ -195,77 +199,28 @@ class MemoryMatchScreen extends ConsumerWidget {
     );
   }
 
-  void _showWinDialog(BuildContext context, WidgetRef ref, MemoryMatchState state) {
-    showDialog(
+  void _showWinDialog(BuildContext context, WidgetRef ref, MemoryMatchState state) async {
+    ref.read(progressProvider.notifier).markGameAsPlayed('memory_match');
+    
+    int stars = 3;
+    if (state.moves > state.totalPairs * 3) {
+      stars = 1;
+    } else if (state.moves > state.totalPairs * 2) {
+      stars = 2;
+    }
+
+    final payload = await ref.read(rewardManagerProvider.notifier).dispatch(
+      RewardEvent(type: RewardEventType.gameWin, entityId: 'memory_match', score: stars),
+    );
+
+    if (!context.mounted) return;
+
+    CelebrationModal.show(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        contentPadding: const EdgeInsets.all(28),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🎉', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 12),
-            const Text(
-              'शाबास!',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.success),
-            ),
-            const Text(
-              'Well Done!',
-              style: TextStyle(fontSize: 16, color: AppColors.primary, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.star_rounded, color: Colors.amber, size: 44),
-                Icon(Icons.star_rounded, color: Colors.amber, size: 44),
-                Icon(Icons.star_rounded, color: Colors.amber, size: 44),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${state.moves} चाल मा जितियो!',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textDark),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ref.read(memoryMatchProvider.notifier).restartGame();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('फेरि खेल', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.go('/games');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('ठीक छ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                  ),
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
+      payload: payload,
+      onContinue: () {
+        ref.read(memoryMatchProvider.notifier).restartGame();
+      },
     );
   }
 }
