@@ -118,6 +118,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
         password: password,
         data: {'name': name},
+        emailRedirectTo: 'nepali-lms://login-callback',
       );
       
       if (response.user != null) {
@@ -148,6 +149,40 @@ class AuthNotifier extends Notifier<AuthState> {
   void clearError() {
     if (state.status == AuthStatus.error) {
       state = state.copyWith(status: AuthStatus.unauthenticated);
+    }
+  }
+  Future<bool> resetPassword(String email) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'nepali-lms://reset-callback',
+      );
+      state = state.copyWith(status: AuthStatus.unauthenticated); // Reset to base state after success
+      return true;
+    } on AuthException catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: 'An unexpected error occurred.');
+      return false;
+    }
+  }
+
+  Future<bool> updatePassword(String newPassword) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      await _supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+      state = state.copyWith(status: AuthStatus.authenticated);
+      return true;
+    } on AuthException catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: 'An unexpected error occurred.');
+      return false;
     }
   }
 }

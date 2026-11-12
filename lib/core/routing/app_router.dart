@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nepali_kids_lms/features/splash/presentation/screens/splash_screen.dart';
 import 'package:nepali_kids_lms/features/auth/presentation/screens/login_screen.dart';
 import 'package:nepali_kids_lms/features/auth/presentation/screens/signup_screen.dart';
+import 'package:nepali_kids_lms/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:nepali_kids_lms/features/auth/presentation/screens/update_password_screen.dart';
 import 'package:nepali_kids_lms/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:nepali_kids_lms/features/learning_modules/presentation/screens/lessons_home_screen.dart';
 import 'package:nepali_kids_lms/features/learning_modules/presentation/screens/alphabet_section_screen.dart';
@@ -33,6 +35,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/update-password',
+        builder: (context, state) => const UpdatePasswordScreen(),
       ),
       GoRoute(
         path: '/dashboard',

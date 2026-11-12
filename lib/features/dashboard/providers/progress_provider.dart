@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../auth/providers/auth_provider.dart';
 
 /// Represents the global progress state of the user.
 class ProgressState {
@@ -28,12 +29,15 @@ class ProgressState {
 
 /// Notifier to manage progress and sync with SharedPreferences
 class ProgressNotifier extends Notifier<ProgressState> {
-  static const _lessonsKey = 'viewed_lessons';
-  static const _gamesKey = 'played_games';
-  static const _storiesKey = 'read_stories';
+  String get _email => ref.read(authProvider).userEmail ?? 'guest';
+  
+  String get _lessonsKey => 'viewed_lessons_$_email';
+  String get _gamesKey => 'played_games_$_email';
+  String get _storiesKey => 'read_stories_$_email';
 
   @override
   ProgressState build() {
+    ref.watch(authProvider);
     _loadProgress();
     return const ProgressState(
       viewedLessonIds: {},

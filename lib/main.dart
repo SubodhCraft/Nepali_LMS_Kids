@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nepali_kids_lms/core/routing/app_router.dart';
@@ -37,11 +38,37 @@ void main() async {
   );
 }
 
-class NepaliKidsLmsApp extends ConsumerWidget {
+class NepaliKidsLmsApp extends ConsumerStatefulWidget {
   const NepaliKidsLmsApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NepaliKidsLmsApp> createState() => _NepaliKidsLmsAppState();
+}
+
+class _NepaliKidsLmsAppState extends ConsumerState<NepaliKidsLmsApp> {
+  late final StreamSubscription _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.passwordRecovery) {
+        // Deep link triggered a password recovery event
+        // We push to the update password screen
+        ref.read(appRouterProvider).push('/update-password');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(

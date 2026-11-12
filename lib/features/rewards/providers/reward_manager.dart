@@ -3,12 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/models/reward_state.dart';
 import '../domain/models/reward_event.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class RewardManager extends Notifier<RewardState> {
-  static const _storageKey = 'reward_state';
+  String get _storageKey {
+    final email = ref.read(authProvider).userEmail ?? 'guest';
+    return 'reward_state_$email';
+  }
 
   @override
   RewardState build() {
+    // Watch authProvider so this rebuilds when user logs in/out
+    ref.watch(authProvider);
     _loadState();
     return RewardState.initial();
   }
@@ -20,10 +26,12 @@ class RewardManager extends Notifier<RewardState> {
       try {
         final jsonMap = jsonDecode(data) as Map<String, dynamic>;
         state = RewardState.fromJson(jsonMap);
+        return;
       } catch (e) {
         // If parsing fails, stick with initial state
       }
     }
+    state = RewardState.initial();
   }
 
   Future<void> _saveState() async {

@@ -165,17 +165,40 @@ class _DashboardHeader extends StatelessWidget {
           // Logout
           IconButton(
             onPressed: () {
-              ref.read(authProvider.notifier).logout();
-              context.go('/login');
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('बाहिर निस्कने? (Logout)'),
+                  content: const Text('तपाईं पक्का बाहिर निस्कन चाहनुहुन्छ?\nAre you sure you want to logout?'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('होइन (Cancel)', style: TextStyle(color: Colors.grey)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ref.read(authProvider.notifier).logout();
+                        context.go('/login');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('हो (Confirm)', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
             },
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.2),
+                color: AppColors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.logout_rounded,
-                  color: AppColors.white, size: 20),
+              child: const Icon(Icons.logout_rounded, color: AppColors.white, size: 20),
             ),
           ),
         ],
